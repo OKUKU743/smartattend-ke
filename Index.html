@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <title>SmartAttend KE QR Student Sign-In</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SmartAttend KE QR-based student sign-in system for fast, paperless attendance tracking." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Connection Status Bar -->
+  <div id="connectionStatus" role="status" aria-live="polite"></div>
+
+  <!-- Admin Toggle Button -->
+  <button id="adminToggleBtn" class="admin-toggle hidden" aria-label="Toggle admin login">
+    <span>🔐</span> Admin
+  </button>
+
+  <!-- Skip Link -->
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <!-- NAVBAR -->
+  <nav class="navbar" aria-label="Main navigation">
+    <a href="https://smartattendke.ke" target="_blank" rel="noopener noreferrer" class="logo">
+      <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='48' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' rx='10' fill='%2300315F'/%3E%3Ctext x='24' y='33' font-family='sans-serif' font-weight='700' font-size='24' fill='%23F9E18D' text-anchor='middle'%3ESA%3C/text%3E%3C/svg%3E" alt="SmartAttend KE" />
+      <span class="logo-text">SmartAttend KE</span>
+    </a>
+    <div class="nav-right">
+      <button class="dark-toggle" id="dark-toggle" aria-label="Toggle dark mode" title="Toggle dark mode">🌙</button>
+      <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+    </div>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="#hero">Home</a></li>
+      <li><a href="#how-it-works">How It Works</a></li>
+      <li><a href="#student-signin">Sign-In</a></li>
+      <li><a href="#stats-section">Statistics</a></li>
+      <li><a href="#lookup-section">Lookup</a></li>
+      <li><a href="#adminSection" onclick="event.preventDefault(); toggleAdminView();">Admin</a></li>
+      <li><a href="#about-system">About</a></li>
+    </ul>
+  </nav>
+
+  <main id="main-content" tabindex="-1">
+
+    <!-- STUDENT SECTION (wrapped for toggle functionality) -->
+    <div id="studentSection">
+      
+      <!-- HERO -->
+      <section class="hero section" id="hero">
+        <div class="hero-content">
+          <div class="hero-badge">v3.1 — Enhanced</div>
+          <h1>SmartAttend <span>KE</span> Sign-In</h1>
+          <p>Fast, paperless attendance tracking for Kenyan campuses — library, lab, and event sign-ins with cloud storage.</p>
+          <ul class="hero-benefits">
+            <li>Barcode &amp; QR code generation</li>
+            <li>Cloud-stored records via Firebase</li>
+            <li>Attendance statistics dashboard</li>
+            <li>Student lookup by token or ID</li>
+            <li>Secure admin login</li>
+            <li>Offline mode support</li>
+          </ul>
+          <div class="hero-actions">
+            <button type="button" class="btn btn-gold" onclick="document.getElementById('student-signin').scrollIntoView({behavior:'smooth'})">Try Student Sign-In</button>
+            <button type="button" class="btn btn-outline" onclick="document.getElementById('stats-section').scrollIntoView({behavior:'smooth'})">View Statistics</button>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-card-float">
+            <div class="hc-label">Today's Sign-Ins</div>
+            <div class="hc-number" id="hero-count">0</div>
+            <div class="hc-sub">students checked in</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="section" id="how-it-works" aria-labelledby="how-heading">
+        <h2 id="how-heading">How the System Works</h2>
+        <div class="steps-grid">
+          <div class="step-card card">
+            <div class="step-num">01</div>
+            <h3>Enter Details</h3>
+            <p>Student enters their ID, full name, and optional laptop model into the sign-in form.</p>
+          </div>
+          <div class="step-card card">
+            <div class="step-num">02</div>
+            <h3>Generate Code</h3>
+            <p>The system creates a unique barcode and QR code token — print or download for reuse.</p>
+          </div>
+          <div class="step-card card">
+            <div class="step-num">03</div>
+            <h3>Saved to Cloud</h3>
+            <p>Records are saved to Firebase Firestore instantly — accessible from any device, permanently.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT SIGN-IN -->
+      <section class="section" id="student-signin" aria-labelledby="signin-heading">
+        <h2 id="signin-heading">Student Sign-In</h2>
+        <div class="signin-layout">
+          <div class="card signin-card">
+            <form id="signin-form" novalidate>
+              <div class="form-group">
+                <label for="student-id">Student ID <span class="req">*</span></label>
+                <input type="text" id="student-id" class="form-control" required aria-required="true" minlength="3" maxlength="20" autocomplete="off" placeholder="e.g. S1234" pattern="[A-Za-z0-9-]+" />
+                <span class="field-error">Only letters, numbers, and hyphens allowed</span>
+                <div class="input-meta">
+                  <span>Format: SMART-2024-001</span>
+                  <span class="count"><span id="id-count">0</span>/20</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="student-name">Full Name <span class="req">*</span></label>
+                <input type="text" id="student-name" class="form-control" required aria-required="true" minlength="3" maxlength="50" autocomplete="name" placeholder="e.g. Alice Mwangi" />
+                <span class="field-error">Please enter your full name</span>
+                <div class="input-meta">
+                  <span>As it appears on your ID</span>
+                  <span class="count"><span id="name-count">0</span>/50</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="laptop-make">Laptop Make <span class="opt">(optional)</span></label>
+                <input type="text" id="laptop-make" class="form-control" maxlength="30" placeholder="e.g. Dell Inspiron" />
+                <div class="input-meta">
+                  <span>For lab equipment tracking</span>
+                  <span class="count"><span id="laptop-count">0</span>/30</span>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-gold btn-full">Sign In &amp; Generate Code</button>
+            </form>
+
+            <div id="signin-status" class="status" aria-live="polite" role="status"></div>
+            <div id="welcome-banner" class="welcome-banner" aria-live="polite"></div>
+
+            <div class="demo-row">
+              <label for="demo-select">Quick demo:</label>
+              <div class="demo-controls">
+                <select id="demo-select" class="form-select"><option value="">— choose demo student —</option></select>
+                <button type="button" id="fill-demo-btn" class="btn btn-outline-sm">Fill</button>
+              </div>
+            </div>
+
+            <!-- Code tabs -->
+            <div class="code-tabs" role="tablist">
+              <button type="button" class="code-tab active" data-tab="barcode" role="tab" aria-selected="true" aria-controls="barcode-panel">Barcode</button>
+              <button type="button" class="code-tab" data-tab="qrcode" role="tab" aria-selected="false" aria-controls="qrcode-panel">QR Code</button>
+            </div>
+
+            <div id="barcode-panel" class="code-panel" role="tabpanel">
+              <div id="student-barcode" class="barcode-wrap" aria-live="polite">
+                <!-- Empty state -->
+                <div class="empty-state small">
+                  <span class="empty-state-icon">🎫</span>
+                  <p>Sign in to generate your barcode</p>
+                </div>
+              </div>
+              <p id="barcode-token" class="barcode-token" aria-live="polite"></p>
+            </div>
+
+            <div id="qrcode-panel" class="code-panel hidden" role="tabpanel">
+              <div id="student-qrcode" class="qrcode-wrap" aria-live="polite">
+                <!-- Empty state -->
+                <div class="empty-state small">
+                  <span class="empty-state-icon">📱</span>
+                  <p>Sign in to generate your QR code</p>
+                </div>
+              </div>
+              <p id="qrcode-token" class="barcode-token" aria-live="polite"></p>
+            </div>
+
+            <div id="barcode-actions" class="barcode-actions">
+              <button type="button" id="print-barcode-btn" class="btn btn-outline-sm">🖨 Print</button>
+              <button type="button" id="download-barcode-btn" class="btn btn-outline-sm">⬇ Download</button>
+            </div>
+
+            <div class="photo-section">
+              <img id="student-photo" src="" alt="Student avatar" class="photo-img hidden" />
+              <div id="student-photo-info" class="photo-info">
+                <div class="empty-state small">
+                  <span class="empty-state-icon">👤</span>
+                  <p>No student selected yet</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="signin-side">
+            <div class="card summary-card" aria-live="polite">
+              <h3>Session Summary</h3>
+              <div class="summary-stat">
+                <span class="stat-num" id="summary-count">0</span>
+                <span class="stat-label">total sign-ins</span>
+              </div>
+              <p class="summary-last">Last: <span id="summary-last">None</span></p>
+            </div>
+            <div class="card help-card">
+              <h3>How to Use</h3>
+              <ol>
+                <li>Enter your Student ID and full name.</li>
+                <li>Optionally add your laptop make.</li>
+                <li>Click "Sign In &amp; Generate Code".</li>
+                <li>Switch between Barcode and QR Code tabs.</li>
+                <li>Print or download your code for next time.</li>
+              </ol>
+            </div>
+            <div class="card firebase-status-card">
+              <div class="fb-status-row">
+                <span class="fb-dot" id="fb-dot"></span>
+                <span id="fb-status-text">Connecting to Firebase…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- STATISTICS -->
+      <section class="section" id="stats-section" aria-labelledby="stats-heading">
+        <h2 id="stats-heading">Attendance Statistics</h2>
+        <div class="stats-grid">
+          <div class="card stat-card">
+            <div class="stat-icon">📋</div>
+            <div class="stat-value" id="stat-total">0</div>
+            <div class="stat-label-text">Total Sign-Ins</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-value" id="stat-today">0</div>
+            <div class="stat-label-text">Today</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon">👤</div>
+            <div class="stat-value" id="stat-unique">0</div>
+            <div class="stat-label-text">Unique Students</div>
+          </div>
+          <div class="card stat-card">
+            <div class="stat-icon">⏰</div>
+            <div class="stat-value" id="stat-peak">—</div>
+            <div class="stat-label-text">Peak Hour</div>
+          </div>
+        </div>
+        <div class="card stats-chart-card mt-1">
+          <h3>Top Students (Most Sign-Ins)</h3>
+          <div id="top-students-list" class="top-students-list">
+            <!-- Empty state handled by CSS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- STUDENT LOOKUP -->
+      <section class="section" id="lookup-section" aria-labelledby="lookup-heading">
+        <h2 id="lookup-heading">Student Lookup</h2>
+        <div class="card">
+          <p class="lookup-intro">Enter a token or Student ID to look up sign-in details.</p>
+          <div class="lookup-row">
+            <input type="text" id="lookup-input" placeholder="Enter token (e.g. A1B2C3D4E5) or Student ID" class="lookup-input form-control" maxlength="20" />
+            <button type="button" id="lookup-btn" class="btn btn-gold">Search</button>
+          </div>
+          <div id="lookup-result" class="lookup-result" aria-live="polite">
+            <!-- Empty state handled by CSS -->
+          </div>
+        </div>
+      </section>
+
+      <!-- ABOUT -->
+      <section class="section" id="about-system" aria-labelledby="about-heading">
+        <h2 id="about-heading">About This System</h2>
+        <div class="card">
+          <p>A QR/barcode-based student sign-in system for SmartAttend KE. Records are stored securely in Firebase Firestore — persistent across browsers and devices.</p>
+          <ul class="about-list">
+            <li>Designed for library, lab, and event attendance tracking.</li>
+            <li>Cloud storage via Firebase — no data lost when browser clears.</li>
+            <li>Secure admin login with email and password via Firebase Auth.</li>
+            <li>Export records to CSV or print attendance sheets from the Admin dashboard.</li>
+            <li>Student lookup by token or Student ID.</li>
+            <li>Dark mode support for comfortable use in any lighting.</li>
+            <li>Offline mode — sign-ins saved locally when connection is lost.</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- CONTACT -->
+      <section class="section contact" id="contact" aria-labelledby="contact-heading">
+        <h2 id="contact-heading">Contact</h2>
+        <div class="card">
+          <p><strong>SmartAttend KE</strong> — QR/Barcode Attendance Project</p>
+          <p>Email: <a href="mailto:info@smartattendke.ke">info@smartattendke.ke</a></p>
+          <p>Website: <a href="https://smartattendke.ke" target="_blank" rel="noopener noreferrer">smartattendke.ke</a></p>
+        </div>
+      </section>
+
+    </div><!-- /#studentSection -->
+
+    <!-- ADMIN SECTION (separate from student view) -->
+    <div id="adminSection" class="hidden">
+      <section class="section" id="admin-section" aria-labelledby="admin-heading">
+        <h2 id="admin-heading">Admin Dashboard</h2>
+
+        <div id="admin-login-panel" class="card admin-login-panel">
+          <h3>🔐 Admin Login</h3>
+          <p>Sign in with your administrator email and password to access records.</p>
+          <div class="form-group mt-1">
+            <label for="admin-email">Email</label>
+            <input type="email" id="admin-email" class="form-control" placeholder="admin@smartattendke.ke" autocomplete="email" required />
+          </div>
+          <div class="form-group">
+            <label for="admin-password">Password</label>
+            <input type="password" id="admin-password" class="form-control" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <div id="login-error" class="status" role="alert" aria-live="assertive"></div>
+          <button type="button" class="btn btn-gold btn-full" id="admin-login-btn">Sign In to Admin</button>
+          <p class="setup-note hidden" id="firebase-not-configured-note">
+            Firebase not yet configured. Open <code>firebase-config.js</code> and paste your keys.
+          </p>
+        </div>
+
+        <div class="card admin-card hidden" id="admin-dashboard">
+          <div class="admin-header">
+            <p class="admin-title">Student Sign-In Records</p>
+            <div class="admin-user-row">
+              <span id="admin-email-display" class="admin-email-badge"></span>
+              <button type="button" id="admin-logout-btn" class="btn btn-outline-sm">Sign Out</button>
+            </div>
+          </div>
+
+          <!-- Filters -->
+          <div class="admin-filters">
+            <input type="text" id="admin-search" class="filter-input form-control" placeholder="🔍 Search by name, ID, or token…" />
+            <input type="date" id="admin-date-filter" class="filter-input filter-date form-select" />
+            <button type="button" id="clear-filters-btn" class="btn btn-outline-sm">Clear Filters</button>
+          </div>
+
+          <div class="admin-actions">
+            <button type="button" id="refresh-records-btn" class="btn btn-outline-sm">↻ Refresh</button>
+            <button type="button" id="export-csv-btn" class="btn btn-outline-sm">⬇ Export CSV</button>
+            <button type="button" id="print-sheet-btn" class="btn btn-outline-sm">🖨 Print Sheet</button>
+            <button type="button" id="clear-records-btn" class="btn btn-danger-sm">🗑 Clear All</button>
+          </div>
+
+          <p class="admin-note" id="admin-source-note">Loading records…</p>
+
+          <div class="table-wrap" role="region" aria-label="Recent sign-ins">
+            <table id="admin-records-table">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Token</th>
+                  <th scope="col">Student ID</th>
+                  <th scope="col">Name</th>
+                  <th scope="col">Laptop</th>
+                  <th scope="col">Time</th>
+                  <th scope="col">Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Empty state -->
+                        <tr>
+                          <td colspan="7" class="table-empty">
+                            Sign in to view records
+                          </td>
+                        </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div><!-- /#adminSection -->
+
+  </main>
+
+  <footer role="contentinfo">
+    <p>&copy; 2026 SmartAttend KE &mdash; QR/Barcode Attendance System (v3.1)</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="smartattend-ke-config.js"></script>
+  <script src="smartattend-ke.js"></script>
+</body>
+</html>
